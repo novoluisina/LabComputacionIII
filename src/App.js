@@ -1,42 +1,108 @@
-import {useState} from 'react'
+
+import {RouterProvider,createBrowserRouter} from 'react-router-dom'
+import { useState } from 'react';
+
 import './App.css';
-import Login from './components/login/Login'
-import Table from './components/table/Table';
+
+import Task from './components/task/Task';
+import Home from './components/home/Home'
+import Protected from './components/protected/Protected';
+import Login from './components/login/Login';
+import Form from './components/form/Form'
+// import Table from './components/table/Table';
 
 
 function App() {
-  const netIncomes = [
-    {brand: 'McDonalds', income: 1291283}, 
-    {brand: 'Burger King', income: 1927361}, 
-    {brand: 'KFC', income: 1098463}];
+  // const netIncomes = [
+  //   {brand: 'McDonalds', income: 1291283}, 
+  //   {brand: 'Burger King', income: 1927361}, 
+  //   {brand: 'KFC', income: 1098463}];
     
-  const totalIncomes=netIncomes.reduce((total,currentItem)=>total+currentItem.income,0)
-  const average=totalIncomes/netIncomes.length
+  // const totalIncomes=netIncomes.reduce((total,currentItem)=>total+currentItem.income,0)
+  // const average=totalIncomes/netIncomes.length
 
-  const[username, setUsername]=useState('')
-  const[showLogin,setShowLogin]=useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState (false)
 
-  const setUsernameHandler=(value)=>{
-     setUsername(value)
+  const [newTask, setNewTask] = useState('')
+  const [tasks, setTasks] = useState([]);
+
+  const newTaskId = tasks.length > 0 ? tasks[tasks.length - 1].id + 1 : 1;
+
+  const newTaskHandler = (value) => {
+    setNewTask(value)
   }
-  const changeShowLoginHandler=()=>{
-    setShowLogin(!showLogin)
+
+  const addTaskHandler = (event) => {
+    event.preventDefault();
+    if (newTask.trim() === '') {
+    alert("Ingrese una tarea")
+    return;
   }
+    const dataTask = {
+      id:newTaskId,
+      text: newTask,
+      completed: false
+    };
+    
+    setTasks([...tasks, dataTask]);
+    setNewTask('')
+    
+  }
+
+  const markTaskAsCompleted = (taskId) => {
+    const updatedTasks = tasks.map((task) => {
+      if ((task.id-1) === taskId) {
+        return { ...task, completed: true };
+      }
+      return task;
+    });
+    setTasks(updatedTasks);
+  };
+  const deleteTask=(taskId)=>{
+    const updatedTasks = tasks.filter((task) => (task.id-1) !== (taskId));
+    setTasks(updatedTasks.map((task, index) => ({ ...task, id: index + 1 })))
+  }
+
+  const loginHandler =() =>{
+      setIsLoggedIn(true);
+    }
   
-  return (
-    <div className="App">
+  const router = createBrowserRouter([
+    {path:"/",
+      element:
+      <Home onLogin={loginHandler}/>
+    },
 
-      <Table netIncomes={netIncomes} average={average}/>
-      <hr/>
+    {
+      path:"/login",
+      element:
+      <Login />
+    },
 
-      <p><b>Ejercicio obligatorio 3</b></p>
+    {
+      path:"/tareas",
+      element:
+      <Task tasks={tasks} markTaskAsCompleted={markTaskAsCompleted} deleteTask={deleteTask}/>
+    },
 
-      {showLogin ? (<button type="button" onClick={changeShowLoginHandler}>Iniciar sesión</button>)
-      : (<button type="button" onClick={changeShowLoginHandler}>Cerrar sesión</button>)}<br/><br/>
-      {!showLogin && <Login setUsernameHandler={setUsernameHandler} username={username} setUsername={setUsername}/>}
+   {path: '/agregar-tareas',
+     element: (
+      <Protected isLoggedIn={isLoggedIn}>
+        <Form newTaskHandler={newTaskHandler} newTask={newTask} addTaskHandler={addTaskHandler}/>
+      </Protected>
+     )   
+   }
 
-    </div>
-  );
+  ])
+  
+  return <RouterProvider router={router}/>
+    // <div className="App">
+
+    //   {/* <Table netIncomes={netIncomes} average={average}/>
+    //   <hr/> */}
+  
+
+    // </div>
 }
 
 export default App;
